@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { List, Search, MessageSquare, Trash2, Send } from "lucide-react";
+import { List, Search, MessageSquare, Trash2, Send, Plus } from "lucide-react";
 import { BackToDashboard } from "@/components/back-to-dashboard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,9 @@ export default function SQSQueues() {
   const [messageBody, setMessageBody] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [messageSearchTerm, setMessageSearchTerm] = useState("");
+  const [showCreateQueueDialog, setShowCreateQueueDialog] = useState(false);
+  const [newQueueName, setNewQueueName] = useState("");
+  const [isCreatingQueue, setIsCreatingQueue] = useState(false);
 
   useEffect(() => {
     const fetchQueues = async () => {
@@ -185,6 +188,34 @@ export default function SQSQueues() {
     }
   };
 
+  const handleCreateQueue = async () => {
+    if (!newQueueName.trim()) return;
+
+    setIsCreatingQueue(true);
+    try {
+      const response = await fetch('/api/sqs/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ queueName: newQueueName }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setQueues(prevQueues => [...prevQueues, data.queue]);
+      setNewQueueName("");
+      setShowCreateQueueDialog(false);
+    } catch (error) {
+      console.error("Erro ao criar fila:", error);
+    } finally {
+      setIsCreatingQueue(false);
+    }
+  };
+
   const totalPages = Math.ceil(filteredQueues.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
@@ -291,10 +322,18 @@ export default function SQSQueues() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <List className="w-5 h-5" />
-            Lista de Filas
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <List className="w-5 h-5" />
+              Lista de Filas
+            </CardTitle>
+            <Button
+              onClick={() => setShowCreateQueueDialog(true)}
+              size="sm"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Criar Nova Fila
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {isLoading ? (
@@ -550,6 +589,45 @@ export default function SQSQueues() {
               size="default"
             >
               {isSending ? "Enviando..." : "Enviar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCreateQueueDialog} onOpenChange={setShowCreateQueueDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Criar Nova Fila SQS</DialogTitle>
+            <DialogDescription>
+              Digite o nome para a nova fila SQS
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Nome da Fila:</label>
+              <Input
+                value={newQueueName}
+                onChange={(e) => setNewQueueName(e.target.value)}
+                placeholder="Digite o nome da fila..."
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCreateQueueDialog(false)}
+              disabled={isCreatingQueue}
+              size="default"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateQueue}
+              disabled={isCreatingQueue || !newQueueName.trim()}
+              size="default"
+            >
+              {isCreatingQueue ? "Criando..." : "Criar Fila"}
             </Button>
           </DialogFooter>
         </DialogContent>
