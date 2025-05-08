@@ -28,6 +28,7 @@ export default function S3Management() {
   const [objects, setObjects] = useState<S3Object[]>([]);
   const [isObjectsDialogOpen, setIsObjectsDialogOpen] = useState(false);
   const [isUploadingObject, setIsUploadingObject] = useState(false);
+  const [showDropzone, setShowDropzone] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchBuckets = async () => {
@@ -118,8 +119,16 @@ export default function S3Management() {
     }
   };
 
-  const handleObjectUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleShowDropzone = () => setShowDropzone(true);
+  const handleHideDropzone = () => setShowDropzone(false);
+
+  const handleObjectUpload = async (e: React.ChangeEvent<HTMLInputElement> | File | null) => {
+    let file: File | null = null;
+    if (e && 'target' in e) {
+      file = e.target.files?.[0] || null;
+    } else if (e instanceof File) {
+      file = e;
+    }
     if (!file || !selectedBucket) return;
     setIsUploadingObject(true);
     const formData = new FormData();
@@ -132,6 +141,7 @@ export default function S3Management() {
       if (response.ok) {
         toast.success('Arquivo enviado com sucesso');
         fetchObjects(selectedBucket);
+        setShowDropzone(false);
       } else {
         throw new Error('Falha ao enviar arquivo');
       }
@@ -148,25 +158,7 @@ export default function S3Management() {
     if (!selectedBucket) return;
     const file = e.dataTransfer.files[0];
     if (!file) return;
-    setIsUploadingObject(true);
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const response = await fetch(`/api/s3/buckets/${selectedBucket}/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-      if (response.ok) {
-        toast.success('Arquivo enviado com sucesso');
-        fetchObjects(selectedBucket);
-      } else {
-        throw new Error('Falha ao enviar arquivo');
-      }
-    } catch (error) {
-      toast.error('Erro ao enviar arquivo');
-    } finally {
-      setIsUploadingObject(false);
-    }
+    await handleObjectUpload(file);
   };
 
   const deleteObject = async (key: string) => {
@@ -287,13 +279,13 @@ export default function S3Management() {
 
       {/* Dialog de Objetos do Bucket */}
       <Dialog open={isObjectsDialogOpen} onOpenChange={closeObjectsDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="min-w-[60vw] max-w-[90vw]">
           <DialogHeader>
             <DialogTitle>Objetos do Bucket: <span className="font-mono">{selectedBucket}</span></DialogTitle>
           </DialogHeader>
           <div className="flex items-center gap-4 mb-4">
             <Button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={handleShowDropzone}
               disabled={isUploadingObject}
             >
               Fazer Upload
@@ -306,41 +298,57 @@ export default function S3Management() {
               disabled={isUploadingObject}
             />
           </div>
-          {objects.length === 0 ? (
+          {showDropzone ? (
             <div
-              className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 text-gray-500 cursor-pointer hover:border-primary transition"
+              className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 text-gray-500 cursor-pointer hover:border-primary transition relative"
               onDrop={handleDrop}
               onDragOver={e => e.preventDefault()}
+              onClick={() => fileInputRef.current?.click()}
+              style={{ minHeight: 200 }}
             >
               <span className="mb-2">Arraste e solte um arquivo aqui para fazer upload</span>
-              <span className="text-xs">ou clique em "Fazer Upload"</span>
+              <span className="text-xs mb-4">ou clique para selecionar</span>
+              <Button variant="outline" className="absolute top-2 right-2" size="sm" onClick={e => { e.stopPropagation(); handleHideDropzone(); }}>Cancelar</Button>
             </div>
           ) : (
-            <div className="overflow-x-auto max-h-96">
-              <table className="min-w-full bg-white">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-2 border-b text-left text-sm font-semibold text-gray-700">Nome</th>
-                    <th className="px-4 py-2 border-b text-left text-sm font-semibold text-gray-700">Tamanho</th>
-                    <th className="px-4 py-2 border-b text-left text-sm font-semibold text-gray-700">Modificado em</th>
-                    <th className="px-4 py-2 border-b text-center text-sm font-semibold text-gray-700">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {objects.map((obj) => (
-                    <tr key={obj.key} className="hover:bg-gray-50">
-                      <td className="px-4 py-2 border-b font-mono">{obj.key}</td>
-                      <td className="px-4 py-2 border-b">{obj.size ? (obj.size / 1024).toFixed(2) + ' KB' : '-'}</td>
-                      <td className="px-4 py-2 border-b">{obj.lastModified ? new Date(obj.lastModified).toLocaleString() : '-'}</td>
-                      <td className="px-4 py-2 border-b text-center flex gap-2 justify-center">
-                        <Button size="sm" variant="outline" onClick={() => viewObject(obj.key)}>Visualizar</Button>
-                        <Button size="sm" variant="destructive" onClick={() => deleteObject(obj.key)}>Excluir</Button>
-                      </td>
+            objects.length === 0 ? (
+              <div
+                className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 text-gray-500 cursor-pointer hover:border-primary transition"
+                onDrop={handleDrop}
+                onDragOver={e => e.preventDefault()}
+                onClick={() => fileInputRef.current?.click()}
+                style={{ minHeight: 200 }}
+              >
+                <span className="mb-2">Arraste e solte um arquivo aqui para fazer upload</span>
+                <span className="text-xs">ou clique para selecionar</span>
+              </div>
+            ) : (
+              <div className="overflow-x-auto max-h-96 w-full">
+                <table className="min-w-full w-full bg-white">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-2 border-b text-left text-sm font-semibold text-gray-700">Nome</th>
+                      <th className="px-4 py-2 border-b text-left text-sm font-semibold text-gray-700">Tamanho</th>
+                      <th className="px-4 py-2 border-b text-left text-sm font-semibold text-gray-700">Modificado em</th>
+                      <th className="px-4 py-2 border-b text-center text-sm font-semibold text-gray-700">Ações</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {objects.map((obj) => (
+                      <tr key={obj.key} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 border-b font-mono">{obj.key}</td>
+                        <td className="px-4 py-2 border-b">{obj.size ? (obj.size / 1024).toFixed(2) + ' KB' : '-'}</td>
+                        <td className="px-4 py-2 border-b">{obj.lastModified ? new Date(obj.lastModified).toLocaleString() : '-'}</td>
+                        <td className="px-4 py-2 border-b text-center flex gap-2 justify-center">
+                          <Button size="sm" variant="outline" onClick={() => viewObject(obj.key)}>Visualizar</Button>
+                          <Button size="sm" variant="destructive" onClick={() => deleteObject(obj.key)}>Excluir</Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
           )}
         </DialogContent>
       </Dialog>
