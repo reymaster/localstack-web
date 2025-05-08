@@ -48,6 +48,7 @@ export async function GET(request: Request) {
         md5OfAttributes: messages[0].md5_of_message_attributes,
         attributes: messages[0].attributes,
         messageAttributes: messages[0].message_attributes,
+        createdAt: messages[0].created_at,
       });
     }
 
@@ -60,7 +61,8 @@ export async function GET(request: Request) {
         MD5OfBody: msg.md5_of_body,
         MD5OfMessageAttributes: msg.md5_of_message_attributes,
         SentTimestamp: msg.sent_timestamp,
-        ReceiptHandle: '', // Não armazenamos o ReceiptHandle
+        ReceiptHandle: '',
+        createdAt: msg.created_at,
       })),
       count: messages.length,
       queueUrl,

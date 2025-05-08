@@ -78,23 +78,33 @@ export default function Home() {
                                   serviceName.toLowerCase() === 'sns' ? '/sns' :
                                   serviceName.toLowerCase() === 's3' ? '/s3' : '#';
                 return (
-                  <div key={serviceName} className="flex items-center gap-3 p-3 border rounded bg-white hover:bg-gray-50 transition-colors">
-                    {serviceInfo?.icon || <Server className="w-5 h-5" />}
-                    <div className="flex-1">
-                      <h3 className="font-medium">
-                        {servicePath !== '#' ? (
-                          <Link
-                            href={servicePath}
-                            className="block hover:text-blue-600 transition-colors"
-                          >
+                  <div key={serviceName}>
+                    {servicePath !== '#' ? (
+                      <Link
+                        href={servicePath}
+                        className="block"
+                      >
+                        <div className="flex items-center gap-3 p-3 border rounded bg-white hover:bg-gray-50 transition-colors">
+                          {serviceInfo?.icon || <Server className="w-5 h-5" />}
+                          <div className="flex-1">
+                            <h3 className="font-medium hover:text-blue-600 transition-colors">
+                              {serviceInfo?.name || serviceName}
+                            </h3>
+                            <p className="text-sm text-green-600">Ativo</p>
+                          </div>
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="flex items-center gap-3 p-3 border rounded bg-white">
+                        {serviceInfo?.icon || <Server className="w-5 h-5" />}
+                        <div className="flex-1">
+                          <h3 className="font-medium">
                             {serviceInfo?.name || serviceName}
-                          </Link>
-                        ) : (
-                          serviceInfo?.name || serviceName
-                        )}
-                      </h3>
-                      <p className="text-sm text-green-600">Ativo</p>
-                    </div>
+                          </h3>
+                          <p className="text-sm text-green-600">Ativo</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

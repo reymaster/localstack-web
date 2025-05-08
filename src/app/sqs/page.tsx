@@ -42,7 +42,7 @@ type Message = {
   MD5OfMessageAttributes?: string;
   SentTimestamp?: string;
   ReceiptHandle?: string;
-  created_at?: string;
+  createdAt?: string;
 };
 
 const ITEMS_PER_PAGE = 5;
@@ -448,11 +448,11 @@ export default function SQSQueues() {
                             </pre>
                           </div>
                         )}
-                        {message.created_at && (
+                        {message.createdAt && (
                           <div>
                             <h4 className="font-medium text-sm mb-2">Criado em:</h4>
                             <pre className="bg-gray-100 p-4 rounded text-sm overflow-x-auto whitespace-pre-wrap break-words">
-                              {message.created_at}
+                              {message.createdAt}
                             </pre>
                           </div>
                         )}
