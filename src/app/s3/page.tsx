@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { BackToDashboard } from '@/components/back-to-dashboard';
+import { List, Plus } from 'lucide-react';
 
 interface Bucket {
   name: string;
@@ -200,89 +201,102 @@ export default function S3Management() {
   );
 
   return (
-    <div className="container mx-auto p-6">
+    <main className="p-8 min-h-screen">
       <BackToDashboard />
-      <h1 className="text-3xl font-bold mb-6">Gerenciamento de Buckets S3</h1>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">Gerenciamento de Buckets S3</h1>
+      </div>
 
-      <div className="mb-4 flex justify-between items-center gap-2 flex-wrap">
-        <span className="font-semibold text-lg">Buckets Criados</span>
-        <div className="flex gap-2 items-center">
-          <Input
-            placeholder="Pesquisar bucket..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-64"
-          />
-          <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-            <DialogTrigger asChild>
-              <Button variant="default">Criar Bucket</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Criar Novo Bucket</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={createBucket} className="flex flex-col gap-4 mt-2">
-                <Input
-                  placeholder="Nome do bucket"
-                  value={newBucketName}
-                  onChange={(e) => setNewBucketName(e.target.value)}
-                  autoFocus
-                />
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button type="button" variant="outline">Cancelar</Button>
-                  </DialogClose>
-                  <Button type="submit" disabled={isLoading}>
-                    {isLoading ? 'Criando...' : 'Criar Bucket'}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <List className="w-5 h-5" />
+              Lista de Buckets
+            </CardTitle>
+            <div className="flex gap-2 items-center">
+              <Input
+                placeholder="Pesquisar bucket..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-64"
+              />
+              <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="default">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Criar Bucket
                   </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      <div className="overflow-x-auto rounded-lg shadow">
-        <table className="min-w-full bg-white">
-          <thead>
-            <tr>
-              <th className="px-6 py-3 border-b text-left text-sm font-semibold text-gray-700">Nome</th>
-              <th className="px-6 py-3 border-b text-left text-sm font-semibold text-gray-700">Criado em</th>
-              <th className="px-6 py-3 border-b text-center text-sm font-semibold text-gray-700">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredBuckets.length === 0 ? (
-              <tr>
-                <td colSpan={3} className="px-6 py-4 text-center text-gray-500">Nenhum bucket encontrado.</td>
-              </tr>
-            ) : (
-              filteredBuckets.map((bucket) => (
-                <tr key={bucket.name} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 border-b font-mono">{bucket.name}</td>
-                  <td className="px-6 py-4 border-b">{bucket.creationDate ? new Date(bucket.creationDate).toLocaleString() : '-'}</td>
-                  <td className="px-6 py-4 border-b text-center flex gap-2 justify-center">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => openObjectsDialog(bucket.name)}
-                    >
-                      Ver Objetos
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => deleteBucket(bucket.name)}
-                      size="sm"
-                    >
-                      Excluir
-                    </Button>
-                  </td>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Criar Novo Bucket</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={createBucket} className="flex flex-col gap-4 mt-2">
+                    <Input
+                      placeholder="Nome do bucket"
+                      value={newBucketName}
+                      onChange={(e) => setNewBucketName(e.target.value)}
+                      autoFocus
+                    />
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button type="button" variant="outline">Cancelar</Button>
+                      </DialogClose>
+                      <Button type="submit" disabled={isLoading}>
+                        {isLoading ? 'Criando...' : 'Criar Bucket'}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto rounded-lg">
+            <table className="min-w-full bg-white">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 border-b text-left text-sm font-semibold text-gray-700">Nome</th>
+                  <th className="px-6 py-3 border-b text-left text-sm font-semibold text-gray-700">Criado em</th>
+                  <th className="px-6 py-3 border-b text-center text-sm font-semibold text-gray-700">Ações</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {filteredBuckets.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="px-6 py-4 text-center text-gray-500">Nenhum bucket encontrado.</td>
+                  </tr>
+                ) : (
+                  filteredBuckets.map((bucket) => (
+                    <tr key={bucket.name} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 border-b font-mono">{bucket.name}</td>
+                      <td className="px-6 py-4 border-b">{bucket.creationDate ? new Date(bucket.creationDate).toLocaleString() : '-'}</td>
+                      <td className="px-6 py-4 border-b text-center flex gap-2 justify-center">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => openObjectsDialog(bucket.name)}
+                        >
+                          Ver Objetos
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => deleteBucket(bucket.name)}
+                          size="sm"
+                        >
+                          Excluir
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Dialog de Objetos do Bucket */}
       <Dialog open={isObjectsDialogOpen} onOpenChange={closeObjectsDialog}>
@@ -290,7 +304,7 @@ export default function S3Management() {
           <DialogHeader>
             <DialogTitle>Objetos do Bucket: <span className="font-mono">{selectedBucket}</span></DialogTitle>
           </DialogHeader>
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center justify-end gap-4 mb-4">
             <Button
               onClick={handleShowDropzone}
               disabled={isUploadingObject}
@@ -358,8 +372,11 @@ export default function S3Management() {
               </div>
             )
           )}
+          <DialogFooter className="justify-end border-t border-gray-200 pt-4">
+            <Button variant="outline" onClick={closeObjectsDialog}>Fechar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </main>
   );
 }

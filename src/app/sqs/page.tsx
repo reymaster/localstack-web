@@ -314,7 +314,7 @@ export default function SQSQueues() {
   });
 
   return (
-    <main className="p-8 bg-gray-100 min-h-screen">
+    <main className="p-8 min-h-screen">
       <BackToDashboard />
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Filas SQS</h1>

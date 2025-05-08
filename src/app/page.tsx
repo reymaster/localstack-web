@@ -116,7 +116,7 @@ export default function Home() {
   );
 
   return (
-    <main className="p-8 bg-gray-100 min-h-screen">
+    <main className="p-8 min-h-screen">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Console LocalStack</h1>
       </div>
