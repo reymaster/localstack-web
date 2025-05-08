@@ -4,11 +4,13 @@ import Link from "next/link";
 
 export function BackToDashboard() {
   return (
-    <Link href="/">
-      <Button variant="outline" className="mb-4">
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Voltar ao Dashboard
-      </Button>
-    </Link>
+    <div className="flex justify-end">
+        <Link href="/">
+            <Button variant="outline" className="mb-4">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar ao Dashboard
+            </Button>
+        </Link>
+    </div>
   );
 }

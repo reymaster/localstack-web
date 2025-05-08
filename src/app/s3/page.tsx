@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
+import Link from 'next/link';
+import { BackToDashboard } from '@/components/back-to-dashboard';
 
 interface Bucket {
   name: string;
@@ -199,6 +201,7 @@ export default function S3Management() {
 
   return (
     <div className="container mx-auto p-6">
+      <BackToDashboard />
       <h1 className="text-3xl font-bold mb-6">Gerenciamento de Buckets S3</h1>
 
       <div className="mb-4 flex justify-between items-center gap-2 flex-wrap">
