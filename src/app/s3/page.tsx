@@ -122,31 +122,35 @@ export default function S3Management() {
   const handleShowDropzone = () => setShowDropzone(true);
   const handleHideDropzone = () => setShowDropzone(false);
 
-  const handleObjectUpload = async (e: React.ChangeEvent<HTMLInputElement> | File | null) => {
-    let file: File | null = null;
+  const handleObjectUpload = async (e: React.ChangeEvent<HTMLInputElement> | File[] | File | null) => {
+    let files: File[] = [];
     if (e && 'target' in e) {
-      file = e.target.files?.[0] || null;
+      files = Array.from(e.target.files || []);
+    } else if (Array.isArray(e)) {
+      files = e;
     } else if (e instanceof File) {
-      file = e;
+      files = [e];
     }
-    if (!file || !selectedBucket) return;
+    if (!files.length || !selectedBucket) return;
     setIsUploadingObject(true);
-    const formData = new FormData();
-    formData.append('file', file);
     try {
-      const response = await fetch(`/api/s3/buckets/${selectedBucket}/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-      if (response.ok) {
-        toast.success('Arquivo enviado com sucesso');
-        fetchObjects(selectedBucket);
-        setShowDropzone(false);
-      } else {
-        throw new Error('Falha ao enviar arquivo');
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch(`/api/s3/buckets/${selectedBucket}/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+        if (response.ok) {
+          toast.success(`Arquivo "${file.name}" enviado com sucesso`);
+        } else {
+          toast.error(`Erro ao enviar "${file.name}"`);
+        }
       }
+      fetchObjects(selectedBucket);
+      setShowDropzone(false);
     } catch (error) {
-      toast.error('Erro ao enviar arquivo');
+      toast.error('Erro ao enviar arquivos');
     } finally {
       setIsUploadingObject(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -156,9 +160,9 @@ export default function S3Management() {
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (!selectedBucket) return;
-    const file = e.dataTransfer.files[0];
-    if (!file) return;
-    await handleObjectUpload(file);
+    const files = Array.from(e.dataTransfer.files);
+    if (!files.length) return;
+    await handleObjectUpload(files);
   };
 
   const deleteObject = async (key: string) => {
@@ -296,6 +300,7 @@ export default function S3Management() {
               className="hidden"
               onChange={handleObjectUpload}
               disabled={isUploadingObject}
+              multiple
             />
           </div>
           {showDropzone ? (
@@ -306,8 +311,8 @@ export default function S3Management() {
               onClick={() => fileInputRef.current?.click()}
               style={{ minHeight: 200 }}
             >
-              <span className="mb-2">Arraste e solte um arquivo aqui para fazer upload</span>
-              <span className="text-xs mb-4">ou clique para selecionar</span>
+              <span className="mb-2">Arraste e solte arquivos aqui para fazer upload</span>
+              <span className="text-xs mb-4">ou clique para selecionar (vários arquivos suportados)</span>
               <Button variant="outline" className="absolute top-2 right-2" size="sm" onClick={e => { e.stopPropagation(); handleHideDropzone(); }}>Cancelar</Button>
             </div>
           ) : (
@@ -319,8 +324,8 @@ export default function S3Management() {
                 onClick={() => fileInputRef.current?.click()}
                 style={{ minHeight: 200 }}
               >
-                <span className="mb-2">Arraste e solte um arquivo aqui para fazer upload</span>
-                <span className="text-xs">ou clique para selecionar</span>
+                <span className="mb-2">Arraste e solte arquivos aqui para fazer upload</span>
+                <span className="text-xs">ou clique para selecionar (vários arquivos suportados)</span>
               </div>
             ) : (
               <div className="overflow-x-auto max-h-96 w-full">
