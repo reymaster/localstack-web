@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -12,12 +12,23 @@ interface Bucket {
   creationDate: string;
 }
 
+interface S3Object {
+  key: string;
+  size: number;
+  lastModified: string;
+}
+
 export default function S3Management() {
   const [buckets, setBuckets] = useState<Bucket[]>([]);
   const [newBucketName, setNewBucketName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
+  const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
+  const [objects, setObjects] = useState<S3Object[]>([]);
+  const [isObjectsDialogOpen, setIsObjectsDialogOpen] = useState(false);
+  const [isUploadingObject, setIsUploadingObject] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchBuckets = async () => {
     try {
@@ -78,6 +89,108 @@ export default function S3Management() {
     } catch (error) {
       toast.error('Erro ao excluir bucket');
     }
+  };
+
+  const openObjectsDialog = async (bucketName: string) => {
+    setSelectedBucket(bucketName);
+    setIsObjectsDialogOpen(true);
+    await fetchObjects(bucketName);
+  };
+
+  const closeObjectsDialog = () => {
+    setIsObjectsDialogOpen(false);
+    setObjects([]);
+    setSelectedBucket(null);
+  };
+
+  const fetchObjects = async (bucketName: string) => {
+    try {
+      const response = await fetch(`/api/s3/buckets/${bucketName}/files`);
+      const data = await response.json();
+      const objs = (data || []).map((obj: any) => ({
+        key: obj.Key,
+        size: obj.Size,
+        lastModified: obj.LastModified,
+      }));
+      setObjects(objs);
+    } catch (error) {
+      toast.error('Erro ao carregar objetos');
+    }
+  };
+
+  const handleObjectUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedBucket) return;
+    setIsUploadingObject(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const response = await fetch(`/api/s3/buckets/${selectedBucket}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (response.ok) {
+        toast.success('Arquivo enviado com sucesso');
+        fetchObjects(selectedBucket);
+      } else {
+        throw new Error('Falha ao enviar arquivo');
+      }
+    } catch (error) {
+      toast.error('Erro ao enviar arquivo');
+    } finally {
+      setIsUploadingObject(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!selectedBucket) return;
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    setIsUploadingObject(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const response = await fetch(`/api/s3/buckets/${selectedBucket}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (response.ok) {
+        toast.success('Arquivo enviado com sucesso');
+        fetchObjects(selectedBucket);
+      } else {
+        throw new Error('Falha ao enviar arquivo');
+      }
+    } catch (error) {
+      toast.error('Erro ao enviar arquivo');
+    } finally {
+      setIsUploadingObject(false);
+    }
+  };
+
+  const deleteObject = async (key: string) => {
+    if (!selectedBucket) return;
+    if (!confirm(`Tem certeza que deseja excluir o objeto ${key}?`)) return;
+    try {
+      const response = await fetch(`/api/s3/buckets/${selectedBucket}/files/${key}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        toast.success('Objeto excluído com sucesso');
+        fetchObjects(selectedBucket);
+      } else {
+        throw new Error('Falha ao excluir objeto');
+      }
+    } catch (error) {
+      toast.error('Erro ao excluir objeto');
+    }
+  };
+
+  const viewObject = (key: string) => {
+    if (!selectedBucket) return;
+    const url = `/api/s3/buckets/${selectedBucket}/files/${key}`;
+    window.open(url, '_blank');
   };
 
   useEffect(() => {
@@ -149,7 +262,14 @@ export default function S3Management() {
                 <tr key={bucket.name} className="hover:bg-gray-50">
                   <td className="px-6 py-4 border-b font-mono">{bucket.name}</td>
                   <td className="px-6 py-4 border-b">{bucket.creationDate ? new Date(bucket.creationDate).toLocaleString() : '-'}</td>
-                  <td className="px-6 py-4 border-b text-center">
+                  <td className="px-6 py-4 border-b text-center flex gap-2 justify-center">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => openObjectsDialog(bucket.name)}
+                    >
+                      Ver Objetos
+                    </Button>
                     <Button
                       variant="destructive"
                       onClick={() => deleteBucket(bucket.name)}
@@ -164,6 +284,66 @@ export default function S3Management() {
           </tbody>
         </table>
       </div>
+
+      {/* Dialog de Objetos do Bucket */}
+      <Dialog open={isObjectsDialogOpen} onOpenChange={closeObjectsDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Objetos do Bucket: <span className="font-mono">{selectedBucket}</span></DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingObject}
+            >
+              Fazer Upload
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleObjectUpload}
+              disabled={isUploadingObject}
+            />
+          </div>
+          {objects.length === 0 ? (
+            <div
+              className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8 text-gray-500 cursor-pointer hover:border-primary transition"
+              onDrop={handleDrop}
+              onDragOver={e => e.preventDefault()}
+            >
+              <span className="mb-2">Arraste e solte um arquivo aqui para fazer upload</span>
+              <span className="text-xs">ou clique em "Fazer Upload"</span>
+            </div>
+          ) : (
+            <div className="overflow-x-auto max-h-96">
+              <table className="min-w-full bg-white">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 border-b text-left text-sm font-semibold text-gray-700">Nome</th>
+                    <th className="px-4 py-2 border-b text-left text-sm font-semibold text-gray-700">Tamanho</th>
+                    <th className="px-4 py-2 border-b text-left text-sm font-semibold text-gray-700">Modificado em</th>
+                    <th className="px-4 py-2 border-b text-center text-sm font-semibold text-gray-700">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {objects.map((obj) => (
+                    <tr key={obj.key} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 border-b font-mono">{obj.key}</td>
+                      <td className="px-4 py-2 border-b">{obj.size ? (obj.size / 1024).toFixed(2) + ' KB' : '-'}</td>
+                      <td className="px-4 py-2 border-b">{obj.lastModified ? new Date(obj.lastModified).toLocaleString() : '-'}</td>
+                      <td className="px-4 py-2 border-b text-center flex gap-2 justify-center">
+                        <Button size="sm" variant="outline" onClick={() => viewObject(obj.key)}>Visualizar</Button>
+                        <Button size="sm" variant="destructive" onClick={() => deleteObject(obj.key)}>Excluir</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
