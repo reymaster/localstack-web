@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { BackToDashboard } from '@/components/back-to-dashboard';
+import Image from 'next/image';
 
 export default function SNSDashboard() {
   const [search, setSearch] = useState('');
@@ -235,20 +236,27 @@ export default function SNSDashboard() {
       {/* Visão geral do SNS */}
       <section className="mb-10">
         <h2 className="text-2xl font-semibold mb-4">Visão Geral do Amazon SNS</h2>
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
               <CardTitle>Application-to-application (A2A)</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="mb-2 text-sm text-muted-foreground">
-                O SNS permite desacoplar publicadores de assinantes, ideal para microserviços, sistemas distribuídos e aplicações serverless.
-              </p>
-              <ul className="text-xs text-muted-foreground list-disc ml-4">
-                <li>Mensageria Pub/Sub gerenciada</li>
-                <li>Filtragem e fanout de mensagens</li>
-                <li>Integração com Lambda, SQS, HTTP, Email</li>
-              </ul>
+              <div className="grid grid-cols-[30%_70%] gap-2">
+                <div>
+                    <p className="mb-2 text-sm text-muted-foreground">
+                        O SNS permite desacoplar publicadores de assinantes, ideal para microserviços, sistemas distribuídos e aplicações serverless.
+                    </p>
+                    <ul className="text-xs text-muted-foreground list-disc ml-4">
+                        <li>Mensageria Pub/Sub gerenciada</li>
+                        <li>Filtragem e fanout de mensagens</li>
+                        <li>Integração com Lambda, SQS, HTTP, Email</li>
+                    </ul>
+                </div>
+                <div>
+                    <Image src="/sns-a2a.png" alt="A2A" width={800} height={300} />
+                </div>
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -256,14 +264,21 @@ export default function SNSDashboard() {
               <CardTitle>Application-to-person (A2P)</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="mb-2 text-sm text-muted-foreground">
-                Envie notificações push, SMS e emails para usuários finais ou endpoints móveis.
-              </p>
-              <ul className="text-xs text-muted-foreground list-disc ml-4">
-                <li>Push para apps móveis</li>
-                <li>Envio de SMS e emails</li>
-                <li>Fanout para múltiplos canais</li>
-              </ul>
+              <div className="grid grid-cols-[30%_70%] gap-2">
+                <div>
+                  <p className="mb-2 text-sm text-muted-foreground">
+                    Envie notificações push, SMS e emails para usuários finais ou endpoints móveis.
+                  </p>
+                  <ul className="text-xs text-muted-foreground list-disc ml-4">
+                    <li>Push para apps móveis</li>
+                    <li>Envio de SMS e emails</li>
+                    <li>Fanout para múltiplos canais</li>
+                  </ul>
+                </div>
+                <div>
+                    <Image src="/sns-a2p.png" alt="A2P" width={800} height={300} />
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

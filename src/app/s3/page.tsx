@@ -348,7 +348,7 @@ export default function S3Management() {
 
       {/* Dialog de Objetos do Bucket */}
       <Dialog open={isObjectsDialogOpen} onOpenChange={closeObjectsDialog}>
-        <DialogContent className="min-w-[60vw] max-w-[90vw]">
+        <DialogContent className="min-w-[70vw] max-w-[90vw]">
           <DialogHeader>
             <DialogTitle>Objetos do Bucket: <span className="font-mono">{selectedBucket}</span></DialogTitle>
           </DialogHeader>
@@ -394,24 +394,26 @@ export default function S3Management() {
               </div>
             ) : (
               <div className="overflow-x-auto max-h-96 w-full">
-                <table className="min-w-full w-full bg-white">
+                <table className="min-w-full w-full bg-white text-sm">
                   <thead>
                     <tr>
-                      <th className="px-4 py-2 border-b text-left text-sm font-semibold text-gray-700">Nome</th>
-                      <th className="px-4 py-2 border-b text-left text-sm font-semibold text-gray-700">Tamanho</th>
-                      <th className="px-4 py-2 border-b text-left text-sm font-semibold text-gray-700">Modificado em</th>
-                      <th className="px-4 py-2 border-b text-center text-sm font-semibold text-gray-700">Ações</th>
+                      <th className="px-4 py-2 border-b text-left font-semibold text-gray-700 w-1/2 whitespace-nowrap">Nome</th>
+                      <th className="px-4 py-2 border-b text-right font-semibold text-gray-700 w-32 whitespace-nowrap">Tamanho</th>
+                      <th className="px-4 py-2 border-b text-center font-semibold text-gray-700 w-48 whitespace-nowrap">Modificado em</th>
+                      <th className="px-4 py-2 border-b text-center font-semibold text-gray-700 w-40 whitespace-nowrap">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     {objects.map((obj) => (
                       <tr key={obj.key} className="hover:bg-gray-50">
-                        <td className="px-4 py-2 border-b font-mono">{obj.key}</td>
-                        <td className="px-4 py-2 border-b">{obj.size ? (obj.size / 1024).toFixed(2) + ' KB' : '-'}</td>
-                        <td className="px-4 py-2 border-b">{obj.lastModified ? new Date(obj.lastModified).toLocaleString() : '-'}</td>
-                        <td className="px-4 py-2 border-b text-center flex gap-2 justify-center">
-                          <Button size="sm" variant="outline" onClick={() => viewObject(obj.key)}>Visualizar</Button>
-                          <Button size="sm" variant="destructive" onClick={() => deleteObject(obj.key)}>Excluir</Button>
+                        <td className="px-4 py-2 border-b font-mono truncate max-w-xs" title={obj.key}>{obj.key}</td>
+                        <td className="px-4 py-2 border-b text-right">{obj.size ? (obj.size / 1024).toFixed(2) + ' KB' : '-'}</td>
+                        <td className="px-4 py-2 border-b text-center">{obj.lastModified ? new Date(obj.lastModified).toLocaleString() : '-'}</td>
+                        <td className="px-4 py-2 border-b text-center">
+                          <div className="flex gap-2 justify-center">
+                            <Button size="sm" variant="outline" onClick={() => viewObject(obj.key)}>Visualizar</Button>
+                            <Button size="sm" variant="destructive" onClick={() => deleteObject(obj.key)}>Excluir</Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
