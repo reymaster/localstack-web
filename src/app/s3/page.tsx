@@ -33,6 +33,8 @@ export default function S3Management() {
   const [isUploadingObject, setIsUploadingObject] = useState(false);
   const [showDropzone, setShowDropzone] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [stats, setStats] = useState<any>(null);
+  const [loadingStats, setLoadingStats] = useState(true);
 
   const fetchBuckets = async () => {
     try {
@@ -196,6 +198,25 @@ export default function S3Management() {
     fetchBuckets();
   }, []);
 
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    async function fetchStats() {
+      setLoadingStats(true);
+      try {
+        const res = await fetch('/api/s3/statistics');
+        const data = await res.json();
+        setStats(data);
+      } catch (err) {
+        setStats(null);
+      } finally {
+        setLoadingStats(false);
+      }
+    }
+    fetchStats();
+    interval = setInterval(fetchStats, 10000); // Atualiza a cada 10 segundos
+    return () => clearInterval(interval);
+  }, []);
+
   const filteredBuckets = buckets.filter((bucket) =>
     bucket.name.toLowerCase().includes(search.toLowerCase())
   );
@@ -205,6 +226,33 @@ export default function S3Management() {
       <BackToDashboard />
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Gerenciamento de Buckets S3</h1>
+      </div>
+      {/* Cards de estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Buckets</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <span className="text-4xl font-bold text-primary">{loadingStats ? '-' : stats?.buckets ?? '-'}</span>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Total de Objetos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <span className="text-4xl font-bold text-primary">{loadingStats ? '-' : stats?.objects ?? '-'}</span>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Uploads Recentes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <span className="text-4xl font-bold text-primary">-</span>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>

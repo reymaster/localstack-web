@@ -67,6 +67,8 @@ export default function SQSQueues() {
   const [showCreateQueueDialog, setShowCreateQueueDialog] = useState(false);
   const [newQueueName, setNewQueueName] = useState("");
   const [isCreatingQueue, setIsCreatingQueue] = useState(false);
+  const [stats, setStats] = useState<any>(null);
+  const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
     const fetchQueues = async () => {
@@ -313,11 +315,58 @@ export default function SQSQueues() {
     );
   });
 
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    async function fetchStats() {
+      setLoadingStats(true);
+      try {
+        const res = await fetch('/api/sqs/statistics');
+        const data = await res.json();
+        setStats(data);
+      } catch (err) {
+        setStats(null);
+      } finally {
+        setLoadingStats(false);
+      }
+    }
+    fetchStats();
+    interval = setInterval(fetchStats, 10000); // Atualiza a cada 10 segundos
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <main className="p-8 min-h-screen">
       <BackToDashboard />
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Filas SQS</h1>
+      </div>
+
+      {/* Cards de estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Filas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <span className="text-4xl font-bold text-primary">{loadingStats ? '-' : stats?.queues ?? '-'}</span>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Total de Mensagens</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <span className="text-4xl font-bold text-primary">{loadingStats ? '-' : stats?.messages ?? '-'}</span>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Mensagens Recentes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <span className="text-4xl font-bold text-primary">{loadingStats ? '-' : stats?.recentMessages ?? '-'}</span>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
